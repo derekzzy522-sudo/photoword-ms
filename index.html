@@ -29,6 +29,7 @@ h1{font-size:22px;font-weight:700;color:var(--primary)}
 .btn-fuzzy{background:var(--warn);color:#fff}
 .btn-forget{background:var(--danger);color:#fff}
 .btn-cam{background:var(--primary);color:white;width:100%;margin:12px 0}
+.btn-cam-secondary{background:#64748b;color:white;width:100%;margin:6px 0}
 #video{width:100%;border-radius:14px;background:#000;aspect-ratio:4/3;object-fit:cover}
 #canvas{display:none}
 .detect-info{margin:10px 0;font-size:15px;color:var(--gray)}
@@ -80,6 +81,8 @@ input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;
 <canvas id="canvas"></canvas>
 <div class="detect-info" id="detect-tip">正在加载模型…</div>
 <button class="btn btn-cam" onclick="takePhoto()">拍照识别</button>
+<button class="btn btn-cam-secondary" onclick="switchCamera()">🔄 切换前后摄像头</button>
+<button class="btn btn-cam-secondary" onclick="stopCamera()">⏹️ 关闭摄像头</button>
 </div>
 
 <div id="view-wordbook" class="view hidden">
@@ -116,7 +119,9 @@ let wordList = JSON.parse(localStorage.getItem('memolen_words')) || [];
 let currentReviewIndex = null;
 let detector = null;
 let camera = null;
+let mediaStream = null;
 let useOcrMode = false;
+let facingMode = "environment"; // 默认后置摄像头
 
 const wordDict = {
   'cup':{zh:'杯子',sentence:'This is a cup for water.'},
@@ -251,13 +256,44 @@ function delWord(idx){
   wordList.splice(idx,1);saveWords();renderWordList();
 }
 
+// 释放摄像头
+async function stopCamera(){
+  if(mediaStream){
+    mediaStream.getTracks().forEach(track=>track.stop());
+    mediaStream=null;
+  }
+  if(camera){
+    await camera.stop();
+    camera=null;
+  }
+  document.getElementById('video').srcObject=null;
+  document.getElementById('detect-tip').innerText="摄像头已关闭";
+}
+
+// 切换前后摄像头
+async function switchCamera(){
+  facingMode = facingMode === "environment" ? "user" : "environment";
+  await stopCamera();
+  await initCamera();
+}
+
 async function initCamera(){
   if(!useOcrMode && detector) return;
   const video = document.getElementById('video');
-  if(!camera){
+  await stopCamera();
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:facingMode}
+    });
+    video.srcObject = mediaStream;
+    await video.play();
     camera = new Camera(video,{onFrame:async()=>{}});
     await camera.start();
+  }catch(e){
+    document.getElementById('detect-tip').innerText="摄像头打开失败："+e.message;
+    return;
   }
+
   if(!useOcrMode && !detector){
     document.getElementById('detect-tip').innerText='加载物体检测模型';
     const model = await ObjectDetector.createFromOptions({
