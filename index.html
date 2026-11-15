@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTWVtTGVuIiwic2hvcnRfbmFtZSI6Ik1lbUxlbiIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmZmZmZmIiwidGhlbWVfY29sb3IiOiIjMjU2M2JmIn0=">
+<title>MemoLen - 间隔重复单词闪卡</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif}
+:root{--primary:#2563bf;--success:#22a75d;--warn:#f59e0b;--danger:#ef4444;--gray:#6b7280;--light:#f3f4f6;--card:#ffffff}
+body{background:#f8fafc;color:#1e293b;padding:16px;max-width:720px;margin:0 auto;padding-bottom:100px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+h1{font-size:22px;font-weight:700;color:var(--primary)}
+.tab-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab{flex:1;padding:12px;border:none;border-radius:10px;background:var(--light);font-size:15px;color:var(--gray)}
+.tab.active{background:var(--primary);color:white}
+.mode-bar{display:flex;gap:8px;margin-bottom:12px}
+.mode-btn{flex:1;padding:10px;border-radius:10px;border:none;background:#e2e8f0;font-size:14px}
+.mode-btn.active{background:#2563bf;color:#fff}
+.card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 16px rgba(0,0,0,0.08);min-height:320px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative}
+.card-word{font-size:34px;font-weight:700;margin-bottom:8px;color:#111}
+.card-zh{font-size:20px;color:var(--gray);margin-bottom:12px}
+.card-sentence{font-size:15px;color:#475569;line-height:1.6;margin-bottom:16px;padding:0 8px}
+.btn-row{display:flex;gap:10px;width:100%;margin-top:20px}
+.btn{flex:1;padding:14px;border:none;border-radius:12px;font-size:16px;font-weight:600}
+.btn-know{background:var(--success);color:#fff}
+.btn-fuzzy{background:var(--warn);color:#fff}
+.btn-forget{background:var(--danger);color:#fff}
+.btn-cam{background:var(--primary);color:white;width:100%;margin:12px 0}
+#video{width:100%;border-radius:14px;background:#000;aspect-ratio:4/3;object-fit:cover}
+#canvas{display:none}
+.detect-info{margin:10px 0;font-size:15px;color:var(--gray)}
+.input-group{margin:10px 0;width:100%}
+input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:16px;margin-top:4px}
+.word-list{margin-top:16px;display:grid;gap:10px}
+.word-item{padding:14px;background:#fff;border-radius:12px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.hidden{display:none !important}
+.speaker{cursor:pointer;color:var(--primary);padding:4px}
+</style>
+</head>
+<body>
+<header>
+<h1>MemoLen</h1>
+</header>
+<div class="tab-bar">
+<button class="tab active" data-view="review">复习</button>
+<button class="tab" data-view="camera">拍照识别</button>
+<button class="tab" data-view="wordbook">单词本</button>
+<button class="tab" data-view="add">手动加词</button>
+</div>
+
+<div id="view-review" class="view">
+<div id="review-card" class="card">
+<div id="r-word" class="card-word"></div>
+<div id="r-zh" class="card-zh"></div>
+<div id="r-sentence" class="card-sentence"></div>
+<div style="display:flex;gap:8px">
+<span class="speaker" onclick="speakWord()">🔊单词</span>
+<span class="speaker" onclick="speakSentence()">🔊例句</span>
+</div>
+<div class="btn-row">
+<button class="btn btn-know" onclick="rateCard(1)">认识</button>
+<button class="btn btn-fuzzy" onclick="rateCard(2)">模糊</button>
+<button class="btn btn-forget" onclick="rateCard(3)">忘记</button>
+</div>
+</div>
+<div id="review-empty" class="hidden" style="text-align:center;padding:40px;color:var(--gray)">
+暂无待复习单词，去拍照识别添加单词吧
+</div>
+</div>
+
+<div id="view-camera" class="view hidden">
+<div class="mode-bar">
+<button class="mode-btn active" id="modeObj">🏠 物体识别</button>
+<button class="mode-btn" id="modeOcr">📝 OCR文字识别</button>
+</div>
+<video id="video" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
+<div class="detect-info" id="detect-tip">正在加载模型…</div>
+<button class="btn btn-cam" onclick="takePhoto()">拍照识别</button>
+</div>
+
+<div id="view-wordbook" class="view hidden">
+<div class="word-list" id="wordList"></div>
+</div>
+
+<div id="view-add" class="view hidden">
+<div class="input-group">
+<label>英文单词</label>
+<input id="in-word" placeholder="apple">
+</div>
+<div class="input-group">
+<label>中文释义</label>
+<input id="in-zh" placeholder="苹果">
+</div>
+<div class="input-group">
+<label>例句</label>
+<textarea id="in-sent" placeholder="I eat an apple every day."></textarea>
+</div>
+<button class="btn btn-cam" onclick="addManualWord()">保存单词</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/object_detector/object_detector.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+const LEVEL_MAP = {
+  1: { interval: 1, label: '认识' },
+  2: { interval: 0.4, label: '模糊' },
+  3: { interval: 0, label: '忘记' }
+};
+let wordList = JSON.parse(localStorage.getItem('memolen_words')) || [];
+let currentReviewIndex = null;
+let detector = null;
+let camera = null;
+let useOcrMode = false;
+
+const wordDict = {
+  'cup':{zh:'杯子',sentence:'This is a cup for water.'},
+  'chair':{zh:'椅子',sentence:'Sit on the chair please.'},
+  'cell phone':{zh:'手机',sentence:'My cell phone is black.'},
+  'book':{zh:'书本',sentence:'I read a book every night.'},
+  'apple':{zh:'苹果',sentence:'An apple a day keeps the doctor away.'},
+  'backpack':{zh:'背包',sentence:'I carry my backpack to school.'},
+  'bottle':{zh:'瓶子',sentence:'This water bottle is blue.'},
+  'laptop':{zh:'笔记本电脑',sentence:'I work on my laptop.'},
+  'mouse':{zh:'鼠标',sentence:'The computer mouse is small.'},
+  'keyboard':{zh:'键盘',sentence:'I type on the keyboard.'},
+  'banana':{zh:'香蕉',sentence:'Banana is sweet and yellow.'},
+  'orange':{zh:'橙子',sentence:'I like fresh orange juice.'},
+  'clock':{zh:'时钟',sentence:'The clock shows 3 o\'clock.'},
+  'tv':{zh:'电视',sentence:'We watch TV after dinner.'},
+  'remote':{zh:'遥控器',sentence:'Hand me the TV remote.'},
+  'bowl':{zh:'碗',sentence:'Put rice in the bowl.'},
+  'fork':{zh:'叉子',sentence:'Use a fork to eat salad.'},
+  'spoon':{zh:'勺子',sentence:'Spoon is for soup.'},
+  'table':{zh:'桌子',sentence:'Put the cup on the table.'},
+  'person':{zh:'人',sentence:'That person is my friend.'}
+};
+
+document.getElementById('modeObj').onclick = ()=>{
+  useOcrMode = false;
+  document.getElementById('modeObj').classList.add('active');
+  document.getElementById('modeOcr').classList.remove('active');
+  document.getElementById('detect-tip').innerText='物体识别模式，加载模型中...';
+}
+document.getElementById('modeOcr').onclick = ()=>{
+  useOcrMode = true;
+  document.getElementById('modeOcr').classList.add('active');
+  document.getElementById('modeObj').classList.remove('active');
+  document.getElementById('detect-tip').innerText='OCR文字识别模式，可以拍单词书本';
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const v=tab.dataset.view;
+    document.querySelectorAll('.view').forEach(el=>el.classList.add('hidden'));
+    document.getElementById('view-'+v).classList.remove('hidden');
+    if(v==='camera') initCamera();
+    if(v==='review') loadReviewCard();
+    if(v==='wordbook') renderWordList();
+  }
+})
+
+function saveWords(){
+  localStorage.setItem('memolen_words',JSON.stringify(wordList));
+}
+function createWord(en,zh,sent){
+  const now = Date.now();
+  return {en,zh,sent,level:3,nextReview:now,created:now};
+}
+function addWord(en,zh,sent){
+  const exist = wordList.find(w=>w.en.toLowerCase()===en.toLowerCase());
+  if(exist) return false;
+  wordList.push(createWord(en,zh,sent));
+  saveWords();
+  return true;
+}
+function addManualWord(){
+  const w = document.getElementById('in-word').value.trim();
+  const z = document.getElementById('in-zh').value.trim();
+  const s = document.getElementById('in-sent').value.trim();
+  if(!w) return alert('请输入英文单词');
+  addWord(w,z||'--',s||'--');
+  alert('添加成功！');
+  document.getElementById('in-word').value='';
+  document.getElementById('in-zh').value='';
+  document.getElementById('in-sent').value='';
+}
+
+function getDueWords(){
+  const now = Date.now();
+  return wordList.filter(w=>w.nextReview <= now);
+}
+function loadReviewCard(){
+  const due = getDueWords();
+  const cardWrap = document.getElementById('review-card');
+  const emptyTip = document.getElementById('review-empty');
+  if(due.length===0){
+    cardWrap.classList.add('hidden');
+    emptyTip.classList.remove('hidden');
+    return;
+  }
+  cardWrap.classList.remove('hidden');
+  emptyTip.classList.add('hidden');
+  currentReviewIndex = wordList.indexOf(due[0]);
+  const item = wordList[currentReviewIndex];
+  document.getElementById('r-word').innerText = item.en;
+  document.getElementById('r-zh').innerText = item.zh;
+  document.getElementById('r-sentence').innerText = item.sent;
+}
+function rateCard(grade){
+  if(currentReviewIndex===null) return;
+  const item = wordList[currentReviewIndex];
+  const day = LEVEL_MAP[grade].interval;
+  item.level = grade;
+  item.nextReview = Date.now() + day * 24 * 60 * 60 * 1000;
+  saveWords();
+  currentReviewIndex=null;
+  loadReviewCard();
+}
+
+function speakWord(){
+  const w = document.getElementById('r-word').innerText;
+  const u = new SpeechSynthesisUtterance(w);
+  u.lang='en-US';speechSynthesis.speak(u);
+}
+function speakSentence(){
+  const s = document.getElementById('r-sentence').innerText;
+  const u = new SpeechSynthesisUtterance(s);
+  u.lang='en-US';speechSynthesis.speak(u);
+}
+
+function renderWordList(){
+  const box=document.getElementById('wordList');
+  box.innerHTML='';
+  wordList.forEach((it,idx)=>{
+    const div=document.createElement('div');
+    div.className='word-item';
+    div.innerHTML=`<div><b>${it.en}</b> ${it.zh}<br><small>${it.sent}</small></div>
+    <button onclick="delWord(${idx})" style="border:none;background:#fee2e2;color:#c00;padding:6px 8px;border-radius:8px">删除</button>`;
+    box.appendChild(div);
+  })
+}
+function delWord(idx){
+  wordList.splice(idx,1);saveWords();renderWordList();
+}
+
+async function initCamera(){
+  if(!useOcrMode && detector) return;
+  const video = document.getElementById('video');
+  if(!camera){
+    camera = new Camera(video,{onFrame:async()=>{}});
+    await camera.start();
+  }
+  if(!useOcrMode && !detector){
+    document.getElementById('detect-tip').innerText='加载物体检测模型';
+    const model = await ObjectDetector.createFromOptions({
+      modelAssetPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/object_detector/object_detector.tflite',
+      scoreThreshold:0.5
+    });
+    detector = model;
+    document.getElementById('detect-tip').innerText='摄像头就绪，点拍照识别';
+  }else{
+    document.getElementById('detect-tip').innerText='OCR模式就绪，对准单词拍照';
+  }
+}
+
+async function takePhoto(){
+  const v=document.getElementById('video');
+  const c=document.getElementById('canvas');
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  const ctx=c.getContext('2d');
+  ctx.drawImage(v,0,0);
+
+  if(useOcrMode){
+    document.getElementById('detect-tip').innerText='OCR识别中...';
+    try{
+      const worker = await Tesseract.createWorker(['eng','chi_sim']);
+      const ret = await worker.recognize(c);
+      await worker.terminate();
+      let text = ret.data.text.trim();
+      if(!text){
+        document.getElementById('detect-tip').innerText='未识别到文字';
+        return;
+      }
+      let word = text.split(/\s+/)[0].replace(/[^\w]/g,'');
+      if(!word) {
+        document.getElementById('detect-tip').innerText='识别文字：'+text;
+        return;
+      }
+      const info = wordDict[word.toLowerCase()] || {zh:'待补充',sentence:'This is '+word+'.'};
+      const ok = addWord(word,info.zh,info.sentence);
+      if(ok){
+        alert(`OCR识别成功：${word}\n释义：${info.zh}\n已加入单词本`);
+      }else{
+        alert(`单词【${word}】已经存在于单词本！`);
+      }
+      document.getElementById('detect-tip').innerText='识别文字：'+word;
+    }catch(err){
+      document.getElementById('detect-tip').innerText='OCR失败：'+err.message;
+    }
+  }else{
+    if(!detector) return alert('物体模型还没加载好');
+    const res = await detector.detect(c);
+    if(!res.detections.length){
+      document.getElementById('detect-tip').innerText='未识别到物体，可以手动添加单词';
+      return;
+    }
+    const best = res.detections[0].categories[0].categoryName.toLowerCase();
+    document.getElementById('detect-tip').innerText='识别到：'+best;
+    const info = wordDict[best] || {zh:best,sent:'This is '+best+'.'};
+    const ok = addWord(best,info.zh,info.sent);
+    if(ok){
+      alert(`识别成功：${best} 【${info.zh}】\n已经加入单词本！`);
+    }else{
+      alert(`单词【${best}】已经存在！`);
+    }
+  }
+}
+</script>
+</body>
+</html>
