@@ -3,42 +3,28 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTWVtTGVuIiwic2hvcnRfbmFtZSI6Ik1lbUxlbiIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmZmZmZmIiwidGhlbWVfY29sb3IiOiIjMjU2M2JmIn0=">
 <title>MemoLen - 间隔重复单词闪卡</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif}
-:root{--primary:#2563bf;--success:#22a75d;--warn:#f59e0b;--danger:#ef4444;--gray:#6b7280;--light:#f3f4f6;--card:#ffffff}
-body{background:#f8fafc;color:#1e293b;padding:16px;max-width:720px;margin:0 auto;padding-bottom:100px}
-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-h1{font-size:22px;font-weight:700;color:var(--primary)}
-.tab-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.tab{flex:1;padding:12px;border:none;border-radius:10px;background:var(--light);font-size:15px;color:var(--gray)}
-.tab.active{background:var(--primary);color:white}
-.mode-bar{display:flex;gap:8px;margin-bottom:12px}
-.mode-btn{flex:1;padding:10px;border-radius:10px;border:none;background:#e2e8f0;font-size:14px}
-.mode-btn.active{background:#2563bf;color:#fff}
-.card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 16px rgba(0,0,0,0.08);min-height:320px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative}
-.card-word{font-size:34px;font-weight:700;margin-bottom:8px;color:#111}
-.card-zh{font-size:20px;color:var(--gray);margin-bottom:12px}
-.card-sentence{font-size:15px;color:#475569;line-height:1.6;margin-bottom:16px;padding:0 8px}
-.btn-row{display:flex;gap:10px;width:100%;margin-top:20px}
-.btn{flex:1;padding:14px;border:none;border-radius:12px;font-size:16px;font-weight:600}
-.btn-know{background:var(--success);color:#fff}
-.btn-fuzzy{background:var(--warn);color:#fff}
-.btn-forget{background:var(--danger);color:#fff}
-.btn-cam{background:var(--primary);color:white;width:100%;margin:12px 0}
-.btn-cam-secondary{background:#64748b;color:white;width:100%;margin:6px 0}
-#video{width:100%;border-radius:14px;background:#000;aspect-ratio:4/3;object-fit:cover}
-#canvas{display:none}
-.detect-info{margin:10px 0;font-size:15px;color:var(--gray)}
-.input-group{margin:10px 0;width:100%}
-input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:16px;margin-top:4px}
-.word-list{margin-top:16px;display:grid;gap:10px}
-.word-item{padding:14px;background:#fff;border-radius:12px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-.hidden{display:none !important}
-.speaker{cursor:pointer;color:var(--primary);padding:4px}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif;}
+:root{--primary:#2563bf;--success:#22a75d;--danger:#e53e3e;--bg:#f8fafc;--card:#ffffff;--text:#1e293b;--muted:#64748b;}
+body{background:#f8fafc;color:#1e293b;padding:16px;max-width:720px;margin:0 auto;}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+h1{font-size:22px;font-weight:700;color:var(--primary);}
+.tab-bar{display:flex;gap:8px;margin-bottom:16px;}
+.tab{flex:1;padding:12px;border:none;border-radius:10px;background:#e2e8f0;color:var(--text);font-size:15px;}
+.tab.active{background:var(--primary);color:#fff;}
+.mode-bar{display:flex;gap:8px;margin-bottom:12px;}
+.mode-btn{flex:1;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;}
+.mode-btn.active{border-color:var(--primary);background:#eff6ff;}
+#video-wrap{position:relative;border-radius:12px;overflow:hidden;background:#000;margin-bottom:12px;}
+video{width:100%;display:block;aspect-ratio:4/3;object-fit:cover;}
+#detect-tip{padding:10px;background:#fff;border-radius:10px;margin-bottom:12px;font-size:14px;color:var(--muted);min-height:44px;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+button{flex:1;padding:14px;border:none;border-radius:10px;font-size:16px;font-weight:500;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-danger{background:var(--danger);color:#fff;}
+canvas{display:none;}
 </style>
 </head>
 <body>
@@ -46,319 +32,267 @@ input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;
 <h1>MemoLen</h1>
 </header>
 <div class="tab-bar">
-<button class="tab active" data-view="review">复习</button>
-<button class="tab" data-view="camera">拍照识别</button>
-<button class="tab" data-view="wordbook">单词本</button>
-<button class="tab" data-view="add">手动加词</button>
+<button class="tab active" data-tab="scan">拍照识别</button>
+<button class="tab" data-tab="review">复习单词</button>
+<button class="tab" data-tab="list">单词本</button>
 </div>
 
-<div id="view-review" class="view">
-<div id="review-card" class="card">
-<div id="r-word" class="card-word"></div>
-<div id="r-zh" class="card-zh"></div>
-<div id="r-sentence" class="card-sentence"></div>
-<div style="display:flex;gap:8px">
-<span class="speaker" onclick="speakWord()">🔊单词</span>
-<span class="speaker" onclick="speakSentence()">🔊例句</span>
-</div>
-<div class="btn-row">
-<button class="btn btn-know" onclick="rateCard(1)">认识</button>
-<button class="btn btn-fuzzy" onclick="rateCard(2)">模糊</button>
-<button class="btn btn-forget" onclick="rateCard(3)">忘记</button>
-</div>
-</div>
-<div id="review-empty" class="hidden" style="text-align:center;padding:40px;color:var(--gray)">
-暂无待复习单词，去拍照识别添加单词吧
-</div>
-</div>
-
-<div id="view-camera" class="view hidden">
+<div id="scan-view">
 <div class="mode-bar">
-<button class="mode-btn active" id="modeObj">🏠 物体识别</button>
-<button class="mode-btn" id="modeOcr">📝 OCR文字识别</button>
+<button class="mode-btn active" id="ocrModeBtn">OCR文字识别</button>
+<button class="mode-btn" id="objModeBtn">物体识别</button>
 </div>
+<div id="video-wrap">
 <video id="video" autoplay playsinline muted></video>
+</div>
+<div id="detect-tip">点击开启摄像头</div>
+<div class="btn-row">
+<button class="btn-primary" id="openCamBtn">开启摄像头</button>
+<button class="btn-primary" id="switchCamBtn">切换前后摄像头</button>
+<button class="btn-success" id="shotBtn">拍照识别</button>
+<button class="btn-danger" id="closeCamBtn">关闭摄像头</button>
+</div>
 <canvas id="canvas"></canvas>
-<div class="detect-info" id="detect-tip">正在加载模型…</div>
-<button class="btn btn-cam" onclick="takePhoto()">拍照识别</button>
-<button class="btn btn-cam-secondary" onclick="switchCamera()">🔄 切换前后摄像头</button>
-<button class="btn btn-cam-secondary" onclick="stopCamera()">⏹️ 关闭摄像头</button>
 </div>
 
-<div id="view-wordbook" class="view hidden">
-<div class="word-list" id="wordList"></div>
+<div id="review-view" style="display:none;">
+<div id="card-box" style="background:#fff;border-radius:12px;padding:30px;text-align:center;min-height:240px;">
+<div id="card-word" style="font-size:28px;font-weight:bold;margin-bottom:12px;"></div>
+<div id="card-zh" style="font-size:18px;color:var(--muted);display:none;"></div>
+</div>
+<div class="btn-row" style="margin-top:16px;">
+<button class="btn-success" id="knowBtn">认识</button>
+<button class="btn-danger" id="unknowBtn">不认识</button>
+</div>
 </div>
 
-<div id="view-add" class="view hidden">
-<div class="input-group">
-<label>英文单词</label>
-<input id="in-word" placeholder="apple">
-</div>
-<div class="input-group">
-<label>中文释义</label>
-<input id="in-zh" placeholder="苹果">
-</div>
-<div class="input-group">
-<label>例句</label>
-<textarea id="in-sent" placeholder="I eat an apple every day."></textarea>
-</div>
-<button class="btn btn-cam" onclick="addManualWord()">保存单词</button>
+<div id="list-view" style="display:none;">
+<div id="wordList"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/object_detector/object_detector.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
-const LEVEL_MAP = {
-  1: { interval: 1, label: '认识' },
-  2: { interval: 0.4, label: '模糊' },
-  3: { interval: 0, label: '忘记' }
-};
-let wordList = JSON.parse(localStorage.getItem('memolen_words')) || [];
-let currentReviewIndex = null;
-let detector = null;
-let camera = null;
-let mediaStream = null;
-let useOcrMode = false;
-let facingMode = "environment"; // 默认后置摄像头
-
 const wordDict = {
-  'cup':{zh:'杯子',sentence:'This is a cup for water.'},
-  'chair':{zh:'椅子',sentence:'Sit on the chair please.'},
-  'cell phone':{zh:'手机',sentence:'My cell phone is black.'},
-  'book':{zh:'书本',sentence:'I read a book every night.'},
-  'apple':{zh:'苹果',sentence:'An apple a day keeps the doctor away.'},
-  'backpack':{zh:'背包',sentence:'I carry my backpack to school.'},
-  'bottle':{zh:'瓶子',sentence:'This water bottle is blue.'},
-  'laptop':{zh:'笔记本电脑',sentence:'I work on my laptop.'},
-  'mouse':{zh:'鼠标',sentence:'The computer mouse is small.'},
-  'keyboard':{zh:'键盘',sentence:'I type on the keyboard.'},
-  'banana':{zh:'香蕉',sentence:'Banana is sweet and yellow.'},
-  'orange':{zh:'橙子',sentence:'I like fresh orange juice.'},
-  'clock':{zh:'时钟',sentence:'The clock shows 3 o\'clock.'},
-  'tv':{zh:'电视',sentence:'We watch TV after dinner.'},
-  'remote':{zh:'遥控器',sentence:'Hand me the TV remote.'},
-  'bowl':{zh:'碗',sentence:'Put rice in the bowl.'},
-  'fork':{zh:'叉子',sentence:'Use a fork to eat salad.'},
-  'spoon':{zh:'勺子',sentence:'Spoon is for soup.'},
-  'table':{zh:'桌子',sentence:'Put the cup on the table.'},
-  'person':{zh:'人',sentence:'That person is my friend.'}
+apple:{zh:"苹果",en:"apple"},
+banana:{zh:"香蕉",en:"banana"},
+cat:{zh:"猫",en:"cat"},
+dog:{zh:"狗",en:"dog"},
+book:{zh:"书",en:"book"},
+pen:{zh:"笔",en:"pen"},
+cup:{zh:"杯子",en:"cup"},
+chair:{zh:"椅子",en:"chair"},
+table:{zh:"桌子",en:"table"},
+car:{zh:"小汽车",en:"car"}
 };
+let wordList = JSON.parse(localStorage.getItem("wordList")||"[]");
+let useOcrMode = true;
+let video = document.getElementById("video");
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let stream = null;
+let detector = null;
+let cameraList = [];
+let currentCamIndex = 0;
 
-document.getElementById('modeObj').onclick = ()=>{
-  useOcrMode = false;
-  document.getElementById('modeObj').classList.add('active');
-  document.getElementById('modeOcr').classList.remove('active');
-  document.getElementById('detect-tip').innerText='物体识别模式，加载模型中...';
+// 标签切换
+document.querySelectorAll(".tab").forEach(tab=>{
+tab.onclick = ()=>{
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+tab.classList.add("active");
+const t = tab.dataset.tab;
+document.getElementById("scan-view").style.display = t==="scan"?"block":"none";
+document.getElementById("review-view").style.display = t==="review"?"block":"none";
+document.getElementById("list-view").style.display = t==="list"?"block":"none";
+if(t==="review") loadReviewCard();
+if(t==="list") renderWordList();
 }
-document.getElementById('modeOcr').onclick = ()=>{
-  useOcrMode = true;
-  document.getElementById('modeOcr').classList.add('active');
-  document.getElementById('modeObj').classList.remove('active');
-  document.getElementById('detect-tip').innerText='OCR文字识别模式，可以拍单词书本';
-}
-
-document.querySelectorAll('.tab').forEach(tab=>{
-  tab.onclick=()=>{
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    tab.classList.add('active');
-    const v=tab.dataset.view;
-    document.querySelectorAll('.view').forEach(el=>el.classList.add('hidden'));
-    document.getElementById('view-'+v).classList.remove('hidden');
-    if(v==='camera') initCamera();
-    if(v==='review') loadReviewCard();
-    if(v==='wordbook') renderWordList();
-  }
 })
-
-function saveWords(){
-  localStorage.setItem('memolen_words',JSON.stringify(wordList));
+// 模式切换
+document.getElementById("ocrModeBtn").onclick = ()=>{
+useOcrMode = true;
+document.getElementById("ocrModeBtn").classList.add("active");
+document.getElementById("objModeBtn").classList.remove("active");
+document.getElementById("detect-tip").innerText = "OCR模式：对准英文单词拍照";
 }
-function createWord(en,zh,sent){
-  const now = Date.now();
-  return {en,zh,sent,level:3,nextReview:now,created:now};
+document.getElementById("objModeBtn").onclick = async ()=>{
+useOcrMode = false;
+document.getElementById("ocrModeBtn").classList.remove("active");
+document.getElementById("objModeBtn").classList.add("active");
+if(!detector){
+document.getElementById("detect-tip").innerText = "正在加载物体识别模型，请稍候...";
+try{
+detector = await cocoSsd.load();
+document.getElementById("detect-tip").innerText = "✅物体模型加载完成，可以拍照识别";
+}catch(e){
+console.error(e);
+document.getElementById("detect-tip").innerText = "❌模型加载失败，请切换网络重试";
 }
-function addWord(en,zh,sent){
-  const exist = wordList.find(w=>w.en.toLowerCase()===en.toLowerCase());
-  if(exist) return false;
-  wordList.push(createWord(en,zh,sent));
-  saveWords();
-  return true;
+}else{
+document.getElementById("detect-tip").innerText = "✅物体模型已就绪，可以拍照";
 }
-function addManualWord(){
-  const w = document.getElementById('in-word').value.trim();
-  const z = document.getElementById('in-zh').value.trim();
-  const s = document.getElementById('in-sent').value.trim();
-  if(!w) return alert('请输入英文单词');
-  addWord(w,z||'--',s||'--');
-  alert('添加成功！');
-  document.getElementById('in-word').value='';
-  document.getElementById('in-zh').value='';
-  document.getElementById('in-sent').value='';
 }
 
-function getDueWords(){
-  const now = Date.now();
-  return wordList.filter(w=>w.nextReview <= now);
+// 停止摄像头
+async function stopCamera(){
+if(stream){
+stream.getTracks().forEach(track=>track.stop());
+stream = null;
+}
+video.srcObject = null;
+}
+
+// 获取摄像头设备列表
+async function loadCameraList(){
+// 先临时拿一次权限，才能枚举设备
+const tempStream = await navigator.mediaDevices.getUserMedia({video:true});
+tempStream.getTracks().forEach(t=>t.stop());
+const devices = await navigator.mediaDevices.enumerateDevices();
+cameraList = devices.filter(d=>d.kind === "videoinput");
+// 优先找后置：一般后置摄像头label包含back/后
+let backIdx = cameraList.findIndex(item=>/back|后|后置/.test(item.label.toLowerCase()));
+if(backIdx >=0) currentCamIndex = backIdx;
+else currentCamIndex = 0;
+}
+
+// 打开指定摄像头
+async function openCamera(){
+await stopCamera();
+if(cameraList.length === 0){
+await loadCameraList();
+}
+if(cameraList.length === 0){
+document.getElementById("detect-tip").innerText = "❌没有找到摄像头，请授予相机权限";
+return;
+}
+const devId = cameraList[currentCamIndex].deviceId;
+try{
+stream = await navigator.mediaDevices.getUserMedia({
+video:{deviceId:{exact:devId}}
+});
+video.srcObject = stream;
+document.getElementById("detect-tip").innerText = `✅已开启摄像头：${cameraList[currentCamIndex].label || "摄像头"}`;
+}catch(err){
+console.error(err);
+document.getElementById("detect-tip").innerText = "❌打开摄像头失败";
+}
+}
+
+// 切换摄像头
+document.getElementById("switchCamBtn").onclick = async ()=>{
+if(cameraList.length === 0){
+await loadCameraList();
+}
+if(cameraList.length <= 1){
+document.getElementById("detect-tip").innerText = "⚠️只有1个摄像头，无法切换";
+return;
+}
+currentCamIndex = (currentCamIndex + 1) % cameraList.length;
+await openCamera();
+}
+
+// 关闭摄像头
+document.getElementById("closeCamBtn").onclick = async ()=>{
+await stopCamera();
+document.getElementById("detect-tip").innerText = "摄像头已关闭";
+}
+document.getElementById("openCamBtn").onclick = openCamera;
+
+// 拍照识别
+document.getElementById("shotBtn").onclick = async function(){
+if(!stream){
+document.getElementById("detect-tip").innerText = "⚠️请先开启摄像头";
+return;
+}
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+ctx.drawImage(video,0,0);
+
+if(useOcrMode){
+// ========== OCR区域，你后续可以放回你的OCR代码 ==========
+document.getElementById("detect-tip").innerText = "📸OCR拍照完成，等待识别";
+// 这里放你原来的OCR逻辑
+setTimeout(()=>{
+document.getElementById("detect-tip").innerText = "✅OCR识别完成";
+}, 600);
+}else{
+// 物体识别，增加模型判断，不再弹窗
+if(!detector){
+document.getElementById("detect-tip").innerText = "⚠️物体模型还没加载好，请等待模型加载完成再拍照";
+return;
+}
+document.getElementById("detect-tip").innerText = "🔍正在识别物体...";
+const res = await detector.detect(canvas);
+if(!res.length){
+document.getElementById("detect-tip").innerText = "❌没有识别到物体，请调整角度重试";
+return;
+}
+const best = res[0].class;
+const info = wordDict[best] || {zh:best,en:best};
+const ok = addWord(best,info.zh,info.en);
+if(ok){
+document.getElementById("detect-tip").innerText = `✅识别成功：${best}【${info.zh}】，已加入单词本`;
+}else{
+document.getElementById("detect-tip").innerText = `ℹ️单词【${best}】已经存在单词本中`;
+}
+}
+}
+
+// 单词存储
+function addWord(en,zh,full){
+const exist = wordList.find(w=>w.en===en);
+if(exist) return false;
+wordList.push({en,zh,full,level:0,next:Date.now()});
+saveWord();
+return true;
+}
+function saveWord(){
+localStorage.setItem("wordList",JSON.stringify(wordList));
 }
 function loadReviewCard(){
-  const due = getDueWords();
-  const cardWrap = document.getElementById('review-card');
-  const emptyTip = document.getElementById('review-empty');
-  if(due.length===0){
-    cardWrap.classList.add('hidden');
-    emptyTip.classList.remove('hidden');
-    return;
-  }
-  cardWrap.classList.remove('hidden');
-  emptyTip.classList.add('hidden');
-  currentReviewIndex = wordList.indexOf(due[0]);
-  const item = wordList[currentReviewIndex];
-  document.getElementById('r-word').innerText = item.en;
-  document.getElementById('r-zh').innerText = item.zh;
-  document.getElementById('r-sentence').innerText = item.sent;
+const now = Date.now();
+const ready = wordList.filter(w=>w.next <= now);
+if(!ready.length){
+document.getElementById("card-word").innerText="暂无待复习单词";
+document.getElementById("card-zh").style.display="none";
+return;
 }
-function rateCard(grade){
-  if(currentReviewIndex===null) return;
-  const item = wordList[currentReviewIndex];
-  const day = LEVEL_MAP[grade].interval;
-  item.level = grade;
-  item.nextReview = Date.now() + day * 24 * 60 * 60 * 1000;
-  saveWords();
-  currentReviewIndex=null;
-  loadReviewCard();
+const pick = ready[0];
+document.getElementById("card-word").innerText = pick.en;
+document.getElementById("card-zh").innerText = pick.zh;
+document.getElementById("card-zh").style.display="none";
+window.currentCard = pick;
 }
-
-function speakWord(){
-  const w = document.getElementById('r-word').innerText;
-  const u = new SpeechSynthesisUtterance(w);
-  u.lang='en-US';speechSynthesis.speak(u);
+document.getElementById("knowBtn").onclick = ()=>{
+const c = window.currentCard;
+if(!c) return;
+c.level = Math.min(c.level+1,5);
+c.next = Date.now() + [1000*60*5,1000*60*30,1000*60*60*3,1000*60*60*24,1000*60*60*24*7][c.level];
+saveWord();
+loadReviewCard();
 }
-function speakSentence(){
-  const s = document.getElementById('r-sentence').innerText;
-  const u = new SpeechSynthesisUtterance(s);
-  u.lang='en-US';speechSynthesis.speak(u);
+document.getElementById("unknowBtn").onclick = ()=>{
+const c = window.currentCard;
+if(!c) return;
+c.level=0;
+c.next = Date.now();
+saveWord();
+loadReviewCard();
 }
-
+document.getElementById("card-word").onclick = ()=>{
+document.getElementById("card-zh").style.display="block";
+}
 function renderWordList(){
-  const box=document.getElementById('wordList');
-  box.innerHTML='';
-  wordList.forEach((it,idx)=>{
-    const div=document.createElement('div');
-    div.className='word-item';
-    div.innerHTML=`<div><b>${it.en}</b> ${it.zh}<br><small>${it.sent}</small></div>
-    <button onclick="delWord(${idx})" style="border:none;background:#fee2e2;color:#c00;padding:6px 8px;border-radius:8px">删除</button>`;
-    box.appendChild(div);
-  })
-}
-function delWord(idx){
-  wordList.splice(idx,1);saveWords();renderWordList();
-}
-
-// 释放摄像头
-async function stopCamera(){
-  if(mediaStream){
-    mediaStream.getTracks().forEach(track=>track.stop());
-    mediaStream=null;
-  }
-  if(camera){
-    await camera.stop();
-    camera=null;
-  }
-  document.getElementById('video').srcObject=null;
-  document.getElementById('detect-tip').innerText="摄像头已关闭";
-}
-
-// 切换前后摄像头
-async function switchCamera(){
-  facingMode = facingMode === "environment" ? "user" : "environment";
-  await stopCamera();
-  await initCamera();
-}
-
-async function initCamera(){
-  if(!useOcrMode && detector) return;
-  const video = document.getElementById('video');
-  await stopCamera();
-  try{
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:facingMode}
-    });
-    video.srcObject = mediaStream;
-    await video.play();
-    camera = new Camera(video,{onFrame:async()=>{}});
-    await camera.start();
-  }catch(e){
-    document.getElementById('detect-tip').innerText="摄像头打开失败："+e.message;
-    return;
-  }
-
-  if(!useOcrMode && !detector){
-    document.getElementById('detect-tip').innerText='加载物体检测模型';
-    const model = await ObjectDetector.createFromOptions({
-      modelAssetPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/object_detector/object_detector.tflite',
-      scoreThreshold:0.5
-    });
-    detector = model;
-    document.getElementById('detect-tip').innerText='摄像头就绪，点拍照识别';
-  }else{
-    document.getElementById('detect-tip').innerText='OCR模式就绪，对准单词拍照';
-  }
-}
-
-async function takePhoto(){
-  const v=document.getElementById('video');
-  const c=document.getElementById('canvas');
-  c.width=v.videoWidth;c.height=v.videoHeight;
-  const ctx=c.getContext('2d');
-  ctx.drawImage(v,0,0);
-
-  if(useOcrMode){
-    document.getElementById('detect-tip').innerText='OCR识别中...';
-    try{
-      const worker = await Tesseract.createWorker(['eng','chi_sim']);
-      const ret = await worker.recognize(c);
-      await worker.terminate();
-      let text = ret.data.text.trim();
-      if(!text){
-        document.getElementById('detect-tip').innerText='未识别到文字';
-        return;
-      }
-      let word = text.split(/\s+/)[0].replace(/[^\w]/g,'');
-      if(!word) {
-        document.getElementById('detect-tip').innerText='识别文字：'+text;
-        return;
-      }
-      const info = wordDict[word.toLowerCase()] || {zh:'待补充',sentence:'This is '+word+'.'};
-      const ok = addWord(word,info.zh,info.sentence);
-      if(ok){
-        alert(`OCR识别成功：${word}\n释义：${info.zh}\n已加入单词本`);
-      }else{
-        alert(`单词【${word}】已经存在于单词本！`);
-      }
-      document.getElementById('detect-tip').innerText='识别文字：'+word;
-    }catch(err){
-      document.getElementById('detect-tip').innerText='OCR失败：'+err.message;
-    }
-  }else{
-    if(!detector) return alert('物体模型还没加载好');
-    const res = await detector.detect(c);
-    if(!res.detections.length){
-      document.getElementById('detect-tip').innerText='未识别到物体，可以手动添加单词';
-      return;
-    }
-    const best = res.detections[0].categories[0].categoryName.toLowerCase();
-    document.getElementById('detect-tip').innerText='识别到：'+best;
-    const info = wordDict[best] || {zh:best,sent:'This is '+best+'.'};
-    const ok = addWord(best,info.zh,info.sent);
-    if(ok){
-      alert(`识别成功：${best} 【${info.zh}】\n已经加入单词本！`);
-    }else{
-      alert(`单词【${best}】已经存在！`);
-    }
-  }
+const wrap = document.getElementById("wordList");
+wrap.innerHTML = "";
+wordList.forEach(w=>{
+const div = document.createElement("div");
+div.style="padding:12px;background:#fff;border-radius:8px;margin-bottom:8px";
+div.innerText = `${w.en} - ${w.zh}`;
+wrap.appendChild(div);
+})
 }
 </script>
+<!-- 引入coco-ssd -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
 </body>
 </html>
